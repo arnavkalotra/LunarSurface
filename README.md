@@ -1,6 +1,8 @@
 CREATE SIMULATION OF LUNAR SURFACE USING MODEL DISTILATION 
 
-Long term: use image distillatino to generate 3D ai environment to optimize pathfinding
+Long term: use image distillation to generate 3D ai environment to optimize pathfinding for lunar habitation in a 2040 mission.
+This is in conjuction with NASA RASC-AL competition as it will originally serve as a ice rover path optimization algorithm.
+This environment can then be set up for a variety of scenarios
 
  
 
