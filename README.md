@@ -24,15 +24,13 @@ Found water-ice spectral signatures at lunar poles.
 
 Key absorption peaks:
 
-2.8–3.2 µm (OH & H₂O bonds)
 
-3000 nm (strongest H₂O absorption)
+<img width="521" height="127" alt="Screenshot 2025-08-30 at 10 56 42 AM" src="https://github.com/user-attachments/assets/e90cc4a6-7416-464a-bcb1-54de33b66e7a" />
 
-6000 nm (confirmed H₂O molecules)
 
-Instruments: UV (260–650 nm), IR spectrometers, and mid-IR cameras to measure plume water content after impact.
 
-📊 Dataset
+
+ Dataset
 
 Main datasets from NASA’s LOLA (Lunar Orbiter Laser Altimeter):
 
