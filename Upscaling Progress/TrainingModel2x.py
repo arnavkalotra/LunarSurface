@@ -1,3 +1,6 @@
+# 2x upscaling
+
+
 import os
 import torch
 import numpy as np
@@ -63,65 +66,53 @@ class ElevationGradientLoss(nn.Module):
         l1_loss = (pred - target).abs().mean()
         return l1_loss + 0.5 * grad_loss
 
-# Inference with Edge-Aware Patching and Pixel Metadata Fix
+# Optional Post-Filter
+from scipy.ndimage import gaussian_filter
+
+def apply_post_filter(sr_array, sigma=1.0):
+    return gaussian_filter(sr_array, sigma=sigma)
+
 @torch.no_grad()
-def infer_full_resolution(model, dataset, output_path='super_res_output.tif', patch_size=128, overlap=16):
+def infer_fully_convolutional(model, dataset, output_path='fullELEVATION.tif'):
     device = next(model.parameters()).device
     model.eval()
 
     lr = dataset.lr
-    h_lr, w_lr = lr.shape
     scale = dataset.scale
+    h_lr, w_lr = lr.shape
     h_hr, w_hr = h_lr * scale, w_lr * scale
 
-    sr_full = np.zeros((h_hr, w_hr), dtype=np.float32)
-    sr_count = np.zeros((h_hr, w_hr), dtype=np.float32)
+    # Prepare input tensor
+    input_tensor = torch.from_numpy(lr).unsqueeze(0).unsqueeze(0).float().to(device)
 
-    step = patch_size - overlap
-    for i in tqdm(range(0, h_lr, step), desc="Full Inference"):
-        for j in range(0, w_lr, step):
-            i_end = min(i + patch_size, h_lr)
-            j_end = min(j + patch_size, w_lr)
-
-            lr_patch = lr[i:i_end, j:j_end]
-
-            pad_h = patch_size - (i_end - i)
-            pad_w = patch_size - (j_end - j)
-            if pad_h > 0 or pad_w > 0:
-                lr_patch = np.pad(lr_patch, ((0, pad_h), (0, pad_w)), mode='reflect')
-
-            lr_tensor = torch.from_numpy(lr_patch).unsqueeze(0).unsqueeze(0).float().to(device)
-            sr_patch = model(lr_tensor).squeeze().cpu().numpy()
-
-            x_hr, y_hr = i * scale, j * scale
-            ph, pw = (i_end - i) * scale, (j_end - j) * scale
-
-            sr_full[x_hr:x_hr+ph, y_hr:y_hr+pw] += sr_patch[:ph, :pw]
-            sr_count[x_hr:x_hr+ph, y_hr:y_hr+pw] += 1
-
-    sr_full = sr_full / np.maximum(sr_count, 1)
-    sr_denorm = sr_full * (dataset.max_val - dataset.min_val) + dataset.min_val
+    # Run model
+    sr_tensor = model(input_tensor).squeeze().cpu().numpy()
+    sr_denorm = sr_tensor * (dataset.max_val - dataset.min_val) + dataset.min_val
     sr_denorm = np.clip(sr_denorm, dataset.min_val, dataset.max_val)
 
+    # Apply Gaussian post-filter
+    sr_filtered = apply_post_filter(sr_denorm, sigma=0.75)
+
+    # Adjust transform for new resolution
     original_transform = dataset.transform
     new_transform = Affine(
         original_transform.a / scale, original_transform.b, original_transform.c,
         original_transform.d, original_transform.e / scale, original_transform.f
     )
 
+    # Save output as GeoTIFF
     with rasterio.open(
-        output_path, 'w', driver='GTiff', height=sr_denorm.shape[0], width=sr_denorm.shape[1],
-        count=1, dtype=sr_denorm.dtype, crs=dataset.crs, transform=new_transform
+        output_path, 'w', driver='GTiff', height=sr_filtered.shape[0], width=sr_filtered.shape[1],
+        count=1, dtype=sr_filtered.dtype, crs=dataset.crs, transform=new_transform
     ) as dst:
-        dst.write(sr_denorm, 1)
+        dst.write(sr_filtered, 1)
 
-    print(f"Saved corrected super-resolved GeoTIFF to: {output_path}")
+    print(f" Fully convolutional super-res output saved to: {output_path}")
 
 # Main Training + Inference
-
 def train_and_infer():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    dataset = ElevationSuperResDataset("elevation_test.tif", patch_size=64)
+    dataset = ElevationSuperResDataset("elevation.tif", patch_size=64)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
 
     model = SwinIR(
@@ -141,10 +132,10 @@ def train_and_infer():
     criterion = ElevationGradientLoss()
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
-    for epoch in range(40):
+    for epoch in range(100):
         model.train()
         total_loss = 0
-        for lr, hr in tqdm(dataloader, desc=f"Epoch {epoch+1}/40"):
+        for lr, hr in tqdm(dataloader, desc=f"Epoch {epoch+1}/100"):
             lr, hr = lr.to(device), hr.to(device)
             sr = model(lr)
             loss = criterion(sr, hr)
@@ -154,7 +145,7 @@ def train_and_infer():
             total_loss += loss.item()
         print(f"Epoch {epoch+1} Loss: {total_loss:.4f}")
 
-    infer_full_resolution(model, dataset)
+    infer_fully_convolutional(model, dataset)
 
 if __name__ == '__main__':
     train_and_infer()
