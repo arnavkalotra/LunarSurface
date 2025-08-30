@@ -10,6 +10,7 @@ Simulate high-resolution lunar terrain for rover path planning.
 
 Apply super-resolution (SwinIR) to enhance NASA elevation/slope datasets.
 
+
 Improve traversability analysis for robotic rovers in ice-mining missions and pathfinding for a lunar settlement
 
 Implement pathfinding algorithms (A*, HPA*, Dijkstra, RRT, Random Forest) with terrain cost functions.
@@ -25,7 +26,8 @@ Found water-ice spectral signatures at lunar poles.
 Key absorption peaks:
 
 
-<img width="521" height="127" alt="Screenshot 2025-08-30 at 10 56 42 AM" src="https://github.com/user-attachments/assets/e90cc4a6-7416-464a-bcb1-54de33b66e7a" />
+
+<img width="512" height="112" alt="Screenshot 2025-08-30 at 10 58 28 AM" src="https://github.com/user-attachments/assets/3f8a621e-aaa4-4e97-b560-1e63a50ebd29" />
 
 
 
