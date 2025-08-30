@@ -1,205 +1,89 @@
-CREATE SIMULATION OF LUNAR SURFACE USING MODEL DISTILATION 
+Ice Rover ML Navigation
 
-Long term: use image distillation to generate 3D ai environment to optimize pathfinding for lunar habitation in a 2040 mission.
-This is in conjuction with NASA RASC-AL competition as it will originally serve as a ice rover path optimization algorithm.
-This environment can then be set up for a variety of scenarios
+Machine learning and super-resolution techniques for simulating lunar surface environments to support rover navigation and ice-mining exploration at the lunar poles.
 
- 
+Project Overview
 
-DATASET  
+This project develops tools to:
 
-LDEM_83S_10MPP_ADJ.TIF - 4.8G    [LOLA ELEVATION MAP 10 m/pixel] 
+Simulate high-resolution lunar terrain for rover path planning.
 
-LDSM_83S_10MPP_ADJ.TIF - 7.1G.  [LOLA SLOP MAP 10 m/pixel] 
+Apply super-resolution (SwinIR) to enhance NASA elevation/slope datasets.
 
- 
+Improve traversability analysis for robotic rovers in ice-mining missions and pathfinding for a lunar settlement
 
-LOLA 
+Implement pathfinding algorithms (A*, HPA*, Dijkstra, RRT, Random Forest) with terrain cost functions.
 
-“In a 50km polar orbit, pulsing the laser at 28 Hz creates an ~50m-wide swatch of five topographic profiles. Swaths will have 1.25km separation at the equator, with [complete polar coverage beyond +/-86 degrees latitude.]” 
+Long-term goal: create a fine-tuned 3D AI environment for lunar ice-mining rovers.
 
-south polar stereographic X/Y coordinates in meters and in the MOON_ME reference frame of the JPL DE421 ephemeris. 
+ Background: Ice Detection
 
- 
+Based on NASA LCROSS mission:
 
-AI MODEL DISTILLATION 
+Found water-ice spectral signatures at lunar poles.
 
-Use error data for slope and elevation 
+Key absorption peaks:
 
-Use hillshade data as well to accurately map surface slope difference  
+2.8–3.2 µm (OH & H₂O bonds)
 
-Use effective resolution data for ? 
+3000 nm (strongest H₂O absorption)
 
- 
+6000 nm (confirmed H₂O molecules)
 
+Instruments: UV (260–650 nm), IR spectrometers, and mid-IR cameras to measure plume water content after impact.
 
- 
+📊 Dataset
 
-Utilize LOLA dataset as metadata for visual map 
+Main datasets from NASA’s LOLA (Lunar Orbiter Laser Altimeter):
 
-Establish habitat location and ice (based on previous imaging) 
+Elevation Map (LDEM_83S_10MPP_ADJ.TIF, 4.8 GB, 10 m/px)
 
-Allign properties to coordinates  
+Slope Map (LDSM_83S_10MPP_ADJ.TIF, 7.1 GB, 10 m/px)
 
- 
- 
+Notes:
 
+Polar orbit at 50 km with 28 Hz pulsing → ~50 m swath resolution.
 
+Full polar coverage beyond ±86° latitude.
 
- 
+Coordinates: South polar stereographic (JPL DE421 reference).
 
-Simulation  
+ Super-Resolution Models
+SRCNN
 
-High res scaled image by using distillation , fitted with meta data from LOLA elevations 
+Crops & normalizes patches.
 
-Topical 3d view with contours pertaining to elevation and slope data  
+Encodes low-res → reconstructs high-res.
 
-Use LCROSS spectrometer data to generate wavelength data in icey regions 
+Early results: shallow network skipped fine-tuning features.
 
-Rover will take time to mine and store ice 
+SwinIR
 
-Multiple runs will be recorded 
+State-of-the-art transformer-based SR.
 
-Set multiple realistic parameters (i.e solar recharching, maintenance ) 
+Tasks: super-resolution, denoising, artifact removal.
 
-Machine learning model will learn as more runs are recorded  
+Uses PSNR & SSIM for evaluation.
 
-ENVIRONMENT 
+Handles padding, normalization, patch attention windows.
 
-Left: -29261.572648417437  
+Adaptation for .TIF data:
 
-Right: 5628.960159503775  
+Downsample 10 m/px → 20 m/px.
 
-Top: -6680.256860031139  
+Train with interference kernel sweeps.
 
-Bottom: -31280.632528556842  
+Iteratively refine weights & handle NaNs.
 
-Converted to Moon long/lat:  
+Current Progress
 
- 
+Successful normalization + padding fixes.
 
-Top Left (lon, lat): (-102.85992303721196, -89.01021245642394)  
+Achieved PSNR > 50 dB, SSIM ~0.9995 at 8x enhancement.
 
-Top Right (lon, lat): (139.88162995401004, -89.71191838603046)  
+Artifacts (slope exaggerations, crater over-enhancement) under investigation.
 
-Bottom Left (lon, lat): (-136.91008487880595, -88.58750983238276)  
+Gaussian post-processing filters reduce slope exaggeration.
 
-Bottom Right (lon, lat): (169.7987828469446, -88.95189095690426) 
+Moving toward convolution interference for smoother blending.
 
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
-File upload nodes 
-
- 
-
-Use python code to accurate remove background for precise latitude, longitude alignment ( USED REMBG FOR PRECISE CROPPING) 
-
- 
-
-Calibrate LOLA MAP using gdal ( vrt files combined with png) (pixel scale of 10m/px) 
-
- 
-
- Align elevation data with slope data 
-
- 
-
- 
-
- 
-
- 
-
-WORKING ON 
-
-Calibrating LROC png with vrt in order to have precise coordinate system ( using gdal) [COMPLETE!] 
-
-Sift through LOLA sets and line up slope, roughness. 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
- 
-
-https://www.nasa.gov/general/what-is-lcross-the-lunar-crater-observation-and-sensing-satellite/ 
-
- 
-
-https://planetarydata.jpl.nasa.gov/img/data/lcross/LCRO_0001/DATA/20091009113022_IMPACT/MIR1/CAL/ 
-
- 
-
-LOLA DATA 
-
-https://astrogeology.usgs.gov/search/map/moon_lro_lola_dem_118m 
-
-ELEVATION 
-
-https://science.nasa.gov/mission/lro/lola/ 
-
-LARGE DATASET ( includes slope and roughness) 
-
-https://pgda.gsfc.nasa.gov/products/90 
-
- 
-
- 
-
-Temperature and Slope, as well as MAP CSV 
-
-https://quickmap.lroc.asu.edu/?prjExtent=-3004075.862069%2C-1737400%2C3004075.862069%2C1737400&selectedFeature=3489%2C8&queryOpts=N4IgLghgRiBcIBMKRAXyA&shadowsType=all&layers=NrBsFYBoAZIRnpEBmZcAsjYIHYFcAbAyAbwF8BdC0yioA&proj=10 
-
- 
-
- 
-
- 
